@@ -289,6 +289,7 @@
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.20.4",
     "@types/vscode": "^1.54.0",
+    "babel-eslint": "^10.1.0",
     "eslint": "^6.6.0",
     "glob": "^7.1.5",
     "mocha": "^6.2.3",
