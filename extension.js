@@ -238,7 +238,9 @@ const functionTypeListMap = {
 const stringFunction = async (commandName, context) => {
   const editor = vscode.window.activeTextEditor;
   const selectionInfos =[];
-  if (!editor) return;
+  if (!editor) {
+    return;
+  }
   
   // Show function type list menu/function list menu (Support multi-level menu, mixed tree menu)
   let typeList = functionTypeListMap[commandName];
@@ -263,7 +265,7 @@ const stringFunction = async (commandName, context) => {
     let temp = { initial: null, textLength: null };
     editor.selections.forEach((selection, index) => {
       let text = editor.document.getText(selection);
-      temp.initial = (index == 0) ? (Number(text) || temp.initial) : temp.initial;
+      temp.initial = (index === 0) ? (Number(text) || temp.initial) : temp.initial;
       
       let result = commandNameFunctionMap[commandName + "Partly"](text, temp.initial, temp.textLength);
       Object.assign(temp, result);
