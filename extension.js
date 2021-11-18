@@ -6,7 +6,7 @@ const slugify = require("@sindresorhus/slugify");
 const defaultFunction = (commandName, option) => (str) =>
   _string[commandName](str, option);
 const leftPadZero = (num, digits, trim) => {
-  let text = ((num == null) || isNaN(num)) ? "" : (num + "");
+  let text = ((num === null) || isNaN(num)) ? "" : (num + "");
   let paddingLength = (digits - text.length);
   return (paddingLength > 0) 
     ? ("0".repeat(paddingLength) + text)
@@ -15,13 +15,13 @@ const leftPadZero = (num, digits, trim) => {
 };
 const sequencePartly = (str, initial, textLength, withZero) => {
   str = str.replace(/-?\d+/g, (n) => {
-    if (initial == null) {
+    if (initial === null) {
       initial = Number(n);
     }
     if (isNaN(initial)) {
       initial = 1;
     }
-    if (textLength == null) {
+    if (textLength === null) {
       textLength = n.length;
     }
     if (isNaN(textLength) || (textLength <= 0)) {
@@ -236,7 +236,9 @@ const functionTypeListMap = {
 const stringFunction = async (commandName) => {
   const editor = vscode.window.activeTextEditor;
   const selectionInfos =[];
-  if (!editor) return;
+  if (!editor) {
+    return;
+  }
   
   // Show function type list menu/function list menu (Support multi-level menu, mixed tree menu)
   let typeList = functionTypeListMap[commandName];
@@ -261,7 +263,7 @@ const stringFunction = async (commandName) => {
     let temp = { initial: null, textLength: null };
     editor.selections.forEach((selection, index) => {
       let text = editor.document.getText(selection);
-      temp.initial = (index == 0) ? (Number(text) || temp.initial) : temp.initial;
+      temp.initial = (index === 0) ? (Number(text) || temp.initial) : temp.initial;
       
       let result = commandNameFunctionMap[commandName + "Partly"](text, temp.initial, temp.textLength);
       Object.assign(temp, result);
