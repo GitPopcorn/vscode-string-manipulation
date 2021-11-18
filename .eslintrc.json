@@ -1,17 +1,23 @@
 {
-    "env": {
-        "browser": false,
-        "commonjs": true,
-        "es6": true,
-        "node": true
-    },
-    "parserOptions": {
-        "ecmaFeatures": {
-            "jsx": true
-        },
-        "sourceType": "module"
-    },
-    "rules": {
+	"env": {
+		"browser": false,
+		"commonjs": true,
+		"es6": true,
+		"node": true,
+		"mocha": true
+	},
+	"parserOptions": {
+		"ecmaVersion": 2018,
+		"ecmaFeatures": {
+			"jsx": true
+		},
+		"sourceType": "module"
+	},
+	"rules": {
+        "curly": "warn",
+        "eqeqeq": "warn",
+        "no-throw-literal": "warn",
+        "semi": "off",
         "no-const-assign": "warn",
         "no-this-before-super": "warn",
         "no-undef": "warn",
