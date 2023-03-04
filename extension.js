@@ -257,7 +257,7 @@ const stringFunction = async (commandName, context) => {
     if (!choice || !choice.commandName) {
       return;
     }
-    await stringFunction(choice.commandName);
+    await stringFunction(choice.commandName, context);
     return;
     
   // Special treatment for sequence/sequenceWithZero function
@@ -303,7 +303,7 @@ const stringFunction = async (commandName, context) => {
       builder.replace(info.selection, info.replaced);
     });
   });
-
+  
   context.globalState.update('lastAction', commandName);
 };
 
@@ -321,7 +321,7 @@ const activate = (context) => {
       }
     )
   );
-
+  
   Object.keys(commandNameFunctionMap).forEach((commandName) => {
     context.subscriptions.push(
       vscode.commands.registerCommand(
