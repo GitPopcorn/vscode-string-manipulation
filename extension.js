@@ -13,24 +13,34 @@ const leftPadZero = (num, digits, trim) => {
     : (trim ? text.substr(paddingLength, digits) : text)
   ;
 };
-const sequencePartly = (str, initial, textLength, withZero) => {
-  str = str.replace(/-?\d+/g, (n) => {
-    if ((initial === null) || (initial === undefined)) {
-      initial = Number(n);
-    }
-    if (isNaN(initial)) {
-      initial = 1;
-    }
-    if ((textLength === null) || (textLength === undefined)) {
-      textLength = n.length;
-    }
-    if (isNaN(textLength) || (textLength <= 0)) {
-      textLength = 1;
-    }
-    return withZero ? leftPadZero(initial ++, textLength) : initial ++;
+/* 
+const sequence = (str, multiselectData = {}) => {
+  return str.replace(/-?\d+/g, (n) => {
+    const isFirst = typeof multiselectData.offset !== "number";
+    multiselectData.offset = isFirst ? Number(n) : multiselectData.offset + 1;
+    return multiselectData.offset;
   });
-  return { str, initial, textLength };
 };
+*/
+const sequenceProcessing = (str, multiselectData = {}, withZero) => {
+  str = str.replace(/-?\d+/g, (n) => {
+    if (isNaN(multiselectData.offset)) {
+      multiselectData.offset = isNaN(Number(n)) ? 1 : Number(n);
+    } else {
+      multiselectData.offset = multiselectData.offset + 1;
+    }
+    if ((multiselectData.textLength === null) || (multiselectData.textLength === undefined)) {
+      multiselectData.textLength = n.length;
+    }
+    if (isNaN(multiselectData.textLength) || (multiselectData.textLength <= 0)) {
+      multiselectData.textLength = 1;
+    }
+    return withZero ? leftPadZero(multiselectData.offset, multiselectData.textLength) : multiselectData.offset;
+  });
+  return { str, multiselectData, withZero };
+};
+const sequence = (str, multiselectData) => sequenceProcessing(str, multiselectData, false).str;
+const sequenceWithZero = (str, multiselectData) => sequenceProcessing(str, multiselectData, true).str;
 const increment = (str, duplicate) => str.replace(/-?\d+/g, (n) => {
   let result = Number(n) + 1;
   return duplicate ? (n + result) : result;
@@ -47,9 +57,6 @@ const decrementWithZero = (str, duplicate) => str.replace(/-?\d+/g, (n) => {
   let result = leftPadZero(Number(n) - 1, n.length);
   return duplicate ? (n + result) : result;
 });
-const sequence = (str) => sequencePartly(str).str;
-const sequenceWithZeroPartly = (str, initial, textLength) => sequencePartly(str, initial, textLength, true);
-const sequenceWithZero = (str) => sequenceWithZeroPartly(str).str;
 
 const commandNameFunctionMap = {
   showAllFunctionTypes: null,
@@ -108,9 +115,9 @@ const commandNameFunctionMap = {
   duplicateNumAndIncrementWithZero: (str) => incrementWithZero(str, true),
   duplicateNumAndDecrementWithZero: (str) => decrementWithZero(str, true),
   sequence,
-  sequencePartly,
   sequenceWithZero,
-  sequenceWithZeroPartly,
+  utf8ToChar: (str) => str.match(/\\u[\dA-Fa-f]{4}/g).map((x) => x.slice(2)).map((x) => String.fromCharCode(parseInt(x, 16))).join(""),
+  charToUtf8: (str) => str.split("").map((x) => `\\u${x.charCodeAt(0).toString(16).padStart(4, '0')}`).join(""),
 };
 const numberFunctionNames = [
   "increment",
@@ -118,6 +125,15 @@ const numberFunctionNames = [
   "sequence",
   "duplicateAndIncrement",
   "duplicateAndDecrement",
+  "duplicateNumAndIncrement",
+  "duplicateNumAndDecrement",
+  "incrementWithZero",
+  "decrementWithZero",
+  "sequenceWithZero",
+  "duplicateAndIncrementWithZero",
+  "duplicateAndDecrementWithZero",
+  "duplicateNumAndIncrementWithZero",
+  "duplicateNumAndDecrementWithZero",
 ];
 const functionNamesWithArgument = ["chop", "truncate", "prune", "repeat"];
 const functionQuickPickItemMap = {
@@ -260,25 +276,14 @@ const stringFunction = async (commandName, context) => {
     await stringFunction(choice.commandName, context);
     return;
     
-  // Special treatment for sequence/sequenceWithZero function
-  } else if ([commandNameFunctionMap.sequence.name, commandNameFunctionMap.sequenceWithZero.name].includes(commandName)) {
-    let temp = { initial: null, textLength: null };
-    editor.selections.forEach((selection, index) => {
-      let text = editor.document.getText(selection);
-      temp.initial = (index === 0) ? (Number(text) || temp.initial) : temp.initial;
-      
-      let result = commandNameFunctionMap[commandName + "Partly"](text, temp.initial, temp.textLength);
-      Object.assign(temp, result);
-      selectionInfos.push({ selection: selection, replaced: result.str });
-    });
-    
   // Other function commands
   } else {
-    editor.selections.forEach(async (selection) => {
+    let multiselectData = {};
+    editor.selections.forEach(async (selection, index) => {
       const text = editor.document.getText(selection);
       const textParts = text.split("\n");
       let stringFunc, replaced;
-      
+  
       if (functionNamesWithArgument.includes(commandName)) {
         const value = await vscode.window.showInputBox();
         stringFunc = commandNameFunctionMap[commandName](value);
@@ -286,7 +291,7 @@ const stringFunction = async (commandName, context) => {
           .reduce((prev, curr) => prev.push(stringFunc(curr)) && prev, [])
           .join("\n");
       } else if (numberFunctionNames.includes(commandName)) {
-        replaced = commandNameFunctionMap[commandName](text);
+        replaced = commandNameFunctionMap[commandName](text, multiselectData);
       } else {
         stringFunc = commandNameFunctionMap[commandName];
         replaced = textParts
